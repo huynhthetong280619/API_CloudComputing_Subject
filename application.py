@@ -13,8 +13,7 @@ def getTemperatureAndHumidityCN():
     modelTHCN = model.getTHCN()
     return jsonify({'currentTemprature':modelTHCN['currentTemp'],
                     'predictTemprature': modelTHCN['predictTemp'],
-                    'currentHumid':modelTHCN['currentHumidity'],
-                    'predictHumid':modelTHCN['predictHumidity']})
+                    'currentHumid':modelTHCN['currentHumidity']})
 application.add_url_rule('/iot', 'getNextFromCurrent', (lambda: getTemperatureAndHumidityCN()))
 
 # Get next temperature
