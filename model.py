@@ -5,3 +5,6 @@ def getTHCN():
         'currentHumidity': 87,
         'predictHumidity' : 86
     }
+
+def getNT(temperature):
+    return {'next': temperature+1.0}
