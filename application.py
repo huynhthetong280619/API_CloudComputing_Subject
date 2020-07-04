@@ -11,7 +11,10 @@ application.add_url_rule('/', 'index', (lambda: component.sayHello()))
 # Get temperature, humid current and predict
 def getTemperatureAndHumidityCN():
     modelTHCN = model.getTHCN()
-    return jsonify({'currentTemprature':modelTHCN['currentTemp'], 'predictTemprature': modelTHCN['predictTemp'], 'currentHumid':modelTHCN['currentHumidity'], 'predictHumid':modelTHCN['predictHumidity']})
+    return jsonify({'currentTemprature':modelTHCN['currentTemp'],
+                    'predictTemprature': modelTHCN['predictTemp'],
+                    'currentHumid':modelTHCN['currentHumidity'],
+                    'predictHumid':modelTHCN['predictHumidity']})
 application.add_url_rule('/iot', 'getNextFromCurrent', (lambda: getTemperatureAndHumidityCN()))
 
 # Get next temperature
