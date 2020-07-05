@@ -1,28 +1,61 @@
 # app.py
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import component, model
+from flask import Flask, jsonify
+from firebase import firebase
 application = Flask(__name__)
-CORS(application)
 
-# add a rule for the index page.
-application.add_url_rule('/', 'index', (lambda: component.sayHello()))
+URL = 'https://project-cloud-e7988.firebaseio.com'
+DATABASE = 'Nhom7/DHT11/'
+
+PARAMETERS_URL = 'https://cloud-abc-cea03.firebaseio.com'
+PARAMETERS_DATABASE = '/ABC'
+
+def Index():
+    return 'API Temperature.'
+application.add_url_rule('/', 'index', (lambda: Index()))
 
 # Get temperature, humid current and predict
-def getTemperatureAndHumidityCN():
-    modelTHCN = model.getTHCN()
-    return jsonify({'currentTemprature':modelTHCN['currentTemp'],
-                    'predictTemprature': modelTHCN['predictTemp'],
-                    'currentHumid':modelTHCN['currentHumidity']})
-application.add_url_rule('/iot', 'getNextFromCurrent', (lambda: getTemperatureAndHumidityCN()))
+def getTemperatureAndHumidity():
 
-# Get next temperature
-def getNext(temperature):
-    modelNext = model.getNT(temperature)
-    return jsonify({'next':modelNext['next']})
+    fb = firebase.FirebaseApplication(URL)
+    res = fb.get(DATABASE, None)
+    data = list(res.values())
+    temperature = float(data[len(data)-1]['Temperature'])
+    humidity = float(data[len(data)-1]['Humidity'])
 
-application.add_url_rule('/iot/<float:temperature>', 'getNext', (lambda temperature:
-    getNext(temperature)))
+    return jsonify({'currentTemprature': temperature,
+                    'currentHumid':humidity
+                    })
+
+application.add_url_rule('/iot', 'getTemperatureAndHumidity', (lambda : getTemperatureAndHumidity()))
+
+# Get predict temperature base on temperature and humidity
+def getPredictTemperature(temperature, humidity):
+    res=getTemperatureHours(temperature, humidity)
+    return jsonify({'next': res})
+
+application.add_url_rule('/iot/<float:temperature>/<float:humidity>',
+    'getPredictTemperature', (lambda temperature, humidity:
+    getPredictTemperature(temperature, humidity)))
+
+def getTemperatureHours(temp, humid):
+    fb = firebase.FirebaseApplication(PARAMETERS_URL)
+    res = fb.get(PARAMETERS_DATABASE, None)
+    data = list(res['1H'].values())
+    A = data[0]
+    B = data[1]
+    C = data[2]
+    res = round(float(A*temp + B*humid + C), 1)
+    return res
+
+def getPredictTemperatureNext():
+    fb = firebase.FirebaseApplication(URL)
+    res = fb.get(DATABASE, None)
+    data = list(res.values())
+    temperature = float(data[len(data)-1]['Temperature'])
+    humidity = float(data[len(data)-1]['Humidity'])
+    return jsonify({'next':getTemperatureHours(temperature, humidity)})
+application.add_url_rule('/iot/next','getPredictTemperatureNext',
+           lambda:getPredictTemperatureNext())  
 
 if __name__ == '__main__':
     # Threaded option to enable multiple instances for multiple user access support
